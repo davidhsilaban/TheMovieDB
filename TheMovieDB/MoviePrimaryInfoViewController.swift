@@ -34,6 +34,25 @@ class MoviePrimaryInfoViewController: UIViewController, UITableViewDelegate, UIT
                     self.movieVideos = vids
                 }
                 
+                DispatchQueue.global().async { [weak self] in
+                    if let posterPath = data?["poster_path"] as? String {
+                        var urlComponents = URLComponents(string: "https://image.tmdb.org/t/p/original"+posterPath)
+//                        var theParams = ["api_key": APIHTTPRequest.API_KEY as Any]
+//                        urlComponents?.queryItems = theParams.map { (key, value) in
+//                            URLQueryItem(name: key, value: String(describing: value))
+//                        }
+                        if let url = urlComponents?.url {
+                            if let data = try? Data(contentsOf: url) {
+                                if let image = UIImage(data: data) {
+                                    DispatchQueue.main.async {
+                                        self?.imageView.image = image
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 DispatchQueue.main.async {
                     if let res = data {
                         for (key, value) in Array(res).sorted(by: {$0.0 < $1.0}) {
