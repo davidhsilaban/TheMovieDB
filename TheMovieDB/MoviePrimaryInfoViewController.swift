@@ -131,6 +131,21 @@ class MoviePrimaryInfoViewController: UIViewController, UITableViewDelegate, UIT
             return nil
         }
     }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if indexPath.section == 1 {
+            let videoData = movieVideos?[indexPath.row]
+            let videoKey = videoData?["key"] as? String ?? ""
+            if let url = URL(string: "https://youtu.be/"+videoKey) {
+                if #available(iOS 10.0, *) {
+                    UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                } else {
+                    // Fallback on earlier versions
+                    UIApplication.shared.openURL(url)
+                }
+            }
+        }
+    }
 
     /*
     // Override to support conditional editing of the table view.
