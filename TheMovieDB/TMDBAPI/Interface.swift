@@ -17,7 +17,7 @@ class TMDBAPIInterface {
     }
     
     func getDiscoverMovies(genreId: Int, page: Int, completionHandler: @escaping (Bool, Int, [String:Any]?) -> Void) {
-        apiHttpRequest.httpGet(endpoint: "/discover/movie", params: ["with_genres": genreId, "page": page, "include_video": true], completionHandler: completionHandler)
+        apiHttpRequest.httpGet(endpoint: "/discover/movie", params: ["with_genres": genreId, "page": page, "include_video": true, "sort_by": "original_title.asc"], completionHandler: completionHandler)
     }
     
     func getPrimaryInfoByMovieId(movieId: Int, completionHandler: @escaping (Bool, Int, [String:Any]?) -> Void) {
