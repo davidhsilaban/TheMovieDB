@@ -52,8 +52,24 @@ class MoviePrimaryInfoViewController: UIViewController, UITableViewDelegate, UIT
                                     DispatchQueue.main.async {
                                         self?.imageView.image = image
                                     }
+                                } else {
+                                    DispatchQueue.main.async {
+                                        self?.imageView.image = UIImage(named: "no_image")
+                                    }
+                                }
+                            } else {
+                                DispatchQueue.main.async {
+                                    self?.imageView.image = UIImage(named: "no_image")
                                 }
                             }
+                        } else {
+                            DispatchQueue.main.async {
+                                self?.imageView.image = UIImage(named: "no_image")
+                            }
+                        }
+                    } else {
+                        DispatchQueue.main.async {
+                            self?.imageView.image = UIImage(named: "no_image")
                         }
                     }
                 }
@@ -61,7 +77,15 @@ class MoviePrimaryInfoViewController: UIViewController, UITableViewDelegate, UIT
                 DispatchQueue.main.async {
                     if let res = data {
                         self.movieDataDict = res
-                        for (key, value) in Array(res).sorted(by: {$0.0 < $1.0}) {
+                        var primaryInfoRes = res
+                        primaryInfoRes["tagline"] = nil
+                        primaryInfoRes["overview"] = nil
+                        primaryInfoRes["genres"] = nil
+                        primaryInfoRes["production_companies"] = nil
+                        primaryInfoRes["production_countries"] = nil
+                        primaryInfoRes["spoken_languages"] = nil
+                        
+                        for (key, value) in Array(primaryInfoRes).sorted(by: {$0.0 < $1.0}) {
                             self.movieDataKeys.append(key)
                             self.movieDataValues.append(String(describing: value))
                         }
