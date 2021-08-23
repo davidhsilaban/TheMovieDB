@@ -34,6 +34,15 @@ class MoviePrimaryInfoViewController: UIViewController, UITableViewDelegate, UIT
         // Load movie info from TMDB
         MBProgressHUD.showAdded(to: self.view, animated: true)
         TMDBAPIInterface.shared.getPrimaryInfoByMovieId(movieId: movieId ?? 0) { (success, statusCode, data) in
+            if !success || !((200...299).contains(statusCode)) {
+                DispatchQueue.main.async {
+                    MBProgressHUD.hide(for: self.view, animated: true)
+                    let alertVc = UIAlertController(title: "Error", message: "Unable to load movie primary info from TheMovieDB", preferredStyle: .alert)
+                    alertVc.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                    self.present(alertVc, animated: true, completion: nil)
+                }
+                return
+            }
             TMDBAPIInterface.shared.getVideosByMovieId(movieId: self.movieId ?? 0) { (success, statusCode, dataVid) in
                 if let vids = dataVid?["results"] as? [[String:Any]] {
                     self.movieVideos = vids

@@ -27,6 +27,13 @@ class MoviesFromGenreTableViewController: UITableViewController {
         MBProgressHUD.showAdded(to: self.view, animated: true)
         TMDBAPIInterface.shared.getDiscoverMovies(genreId: genreId ?? 0, page: 1) { (success, statusCode, data) in
             DispatchQueue.main.async {
+                if !success || !((200...299).contains(statusCode)) {
+                    MBProgressHUD.hide(for: self.view, animated: true)
+                    let alertVc = UIAlertController(title: "Error", message: "Unable to load movies from selected genre from TheMovieDB", preferredStyle: .alert)
+                    alertVc.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                    self.present(alertVc, animated: true, completion: nil)
+                    return
+                }
                 self.totalMovies = data?["total_results"] as? Int ?? 0
                 self.totalPages = data?["total_pages"] as? Int ?? 1
                 if let res = data?["results"] as? [[String:Any]] {
@@ -74,6 +81,13 @@ class MoviesFromGenreTableViewController: UITableViewController {
             if indexPath.row == displayedMovies.count {
                 TMDBAPIInterface.shared.getDiscoverMovies(genreId: genreId ?? 0, page: (indexPath.row / 20)+1) { (success, statusCode, data) in
                     DispatchQueue.main.async {
+                        if !success || !((200...299).contains(statusCode)) {
+                            MBProgressHUD.hide(for: self.view, animated: true)
+                            let alertVc = UIAlertController(title: "Error", message: "Unable to load movies from selected genre from TheMovieDB", preferredStyle: .alert)
+                            alertVc.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                            self.present(alertVc, animated: true, completion: nil)
+                            return
+                        }
                         self.totalMovies = data?["total_results"] as? Int ?? 0
                         self.totalPages = data?["total_pages"] as? Int ?? 1
                         if let res = data?["results"] as? [[String:Any]] {

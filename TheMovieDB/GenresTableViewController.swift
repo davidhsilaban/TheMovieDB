@@ -24,6 +24,13 @@ class GenresTableViewController: UITableViewController {
         MBProgressHUD.showAdded(to: self.view, animated: true)
         TMDBAPIInterface.shared.getMovieGenres { (success, statusCode, data) in
             DispatchQueue.main.async {
+                if !success || !((200...299).contains(statusCode)) {
+                    MBProgressHUD.hide(for: self.view, animated: true)
+                    let alertVc = UIAlertController(title: "Error", message: "Unable to load movie genres from TheMovieDB", preferredStyle: .alert)
+                    alertVc.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                    self.present(alertVc, animated: true, completion: nil)
+                    return
+                }
                 self.genres = data?["genres"] as? [[String:Any]]
                 self.tableView.reloadData()
                 MBProgressHUD.hide(for: self.view, animated: true)

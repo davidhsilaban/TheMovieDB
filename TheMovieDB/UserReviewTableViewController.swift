@@ -27,6 +27,13 @@ class UserReviewTableViewController: UITableViewController {
         MBProgressHUD.showAdded(to: self.view, animated: true)
         TMDBAPIInterface.shared.getReviewsByMovieId(movieId: movieId ?? 0, page: 1) { (success, statusCode, data) in
             DispatchQueue.main.async {
+                if !success || !((200...299).contains(statusCode)) {
+                    MBProgressHUD.hide(for: self.view, animated: true)
+                    let alertVc = UIAlertController(title: "Error", message: "Unable to load movie reviews from TheMovieDB", preferredStyle: .alert)
+                    alertVc.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                    self.present(alertVc, animated: true, completion: nil)
+                    return
+                }
                 if let reviews = data {
                     self.reviews = reviews["results"] as? [[String:Any]]
                     self.totalReviews = reviews["total_results"] as? Int ?? 0
@@ -75,6 +82,13 @@ class UserReviewTableViewController: UITableViewController {
             if indexPath.row == (reviews?.count ?? 0) {
                 TMDBAPIInterface.shared.getReviewsByMovieId(movieId: movieId ?? 0, page: (indexPath.row / 20)+1) { (success, statusCode, data) in
                     DispatchQueue.main.async {
+                        if !success || !((200...299).contains(statusCode)) {
+                            MBProgressHUD.hide(for: self.view, animated: true)
+                            let alertVc = UIAlertController(title: "Error", message: "Unable to load movie reviews from TheMovieDB", preferredStyle: .alert)
+                            alertVc.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                            self.present(alertVc, animated: true, completion: nil)
+                            return
+                        }
                         if let reviews = data {
                             self.reviews = reviews["results"] as? [[String:Any]]
                             self.totalReviews = reviews["total_results"] as? Int ?? 0
