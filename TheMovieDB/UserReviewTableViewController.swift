@@ -12,6 +12,7 @@ class UserReviewTableViewController: UITableViewController {
     var movieId: Int?
     private var reviews: [[String:Any]]?
     private var totalReviews: Int = 0
+    private var totalPages: Int = 1
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,6 +30,7 @@ class UserReviewTableViewController: UITableViewController {
                 if let reviews = data {
                     self.reviews = reviews["results"] as? [[String:Any]]
                     self.totalReviews = reviews["total_results"] as? Int ?? 0
+                    self.totalPages = reviews["total_pages"] as? Int ?? 1
                 }
                 self.tableView.reloadData()
                 MBProgressHUD.hide(for: self.view, animated: true)
@@ -45,18 +47,45 @@ class UserReviewTableViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return reviews?.count ?? 0
+        if reviews?.count ?? 0 < totalPages {
+            return reviews?.count ?? 0 + 1
+        } else {
+            return reviews?.count ?? 0
+        }
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "userReviewCell", for: indexPath)
+        var cell = tableView.dequeueReusableCell(withIdentifier: "userReviewCell", for: indexPath)
 
         // Configure the cell...
-        let reviewData = reviews?[indexPath.row]
-        cell.textLabel?.text = reviewData?["content"] as? String
-        cell.detailTextLabel?.text = reviewData?["author"] as? String
+        if indexPath.row < (reviews?.count ?? 0) {
+            let reviewData = reviews?[indexPath.row]
+            cell.textLabel?.text = reviewData?["content"] as? String
+            cell.detailTextLabel?.text = reviewData?["author"] as? String
+        } else {
+            cell = tableView.dequeueReusableCell(withIdentifier: "loadingCell", for: indexPath)
+            cell.textLabel?.text = "Loading..."
+        }
 
         return cell
+    }
+    
+    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        if (reviews?.count ?? 0) < totalReviews {
+            if indexPath.row == (reviews?.count ?? 0) {
+                TMDBAPIInterface.shared.getReviewsByMovieId(movieId: movieId ?? 0, page: (indexPath.row / 20)+1) { (success, statusCode, data) in
+                    DispatchQueue.main.async {
+                        if let reviews = data {
+                            self.reviews = reviews["results"] as? [[String:Any]]
+                            self.totalReviews = reviews["total_results"] as? Int ?? 0
+                            self.totalPages = reviews["total_pages"] as? Int ?? 1
+                        }
+                        self.tableView.reloadData()
+                        MBProgressHUD.hide(for: self.view, animated: true)
+                    }
+                }
+            }
+        }
     }
 
     /*

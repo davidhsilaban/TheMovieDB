@@ -12,6 +12,7 @@ class MoviesFromGenreTableViewController: UITableViewController {
     var genreId: Int?
     private var displayedMovies: [[String:Any]] = []
     private var totalMovies: Int = 0
+    private var totalPages: Int = 1
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,6 +27,8 @@ class MoviesFromGenreTableViewController: UITableViewController {
         MBProgressHUD.showAdded(to: self.view, animated: true)
         TMDBAPIInterface.shared.getDiscoverMovies(genreId: genreId ?? 0, page: 1) { (success, statusCode, data) in
             DispatchQueue.main.async {
+                self.totalMovies = data?["total_results"] as? Int ?? 0
+                self.totalPages = data?["total_pages"] as? Int ?? 1
                 if let res = data?["results"] as? [[String:Any]] {
                     self.displayedMovies.append(contentsOf: res)
                 }
@@ -44,17 +47,44 @@ class MoviesFromGenreTableViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return displayedMovies.count
+        if displayedMovies.count < totalMovies {
+            return displayedMovies.count + 1
+        } else {
+            return displayedMovies.count
+        }
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "titleCell", for: indexPath)
+        var cell = tableView.dequeueReusableCell(withIdentifier: "titleCell", for: indexPath)
 
         // Configure the cell...
-        let movieData = displayedMovies[indexPath.row]
-        cell.textLabel?.text = movieData["title"] as? String
+        if indexPath.row < displayedMovies.count {
+            let movieData = displayedMovies[indexPath.row]
+            cell.textLabel?.text = movieData["title"] as? String
+        } else {
+            cell = tableView.dequeueReusableCell(withIdentifier: "loadingCell", for: indexPath)
+            cell.textLabel?.text = "Loading..."
+        }
 
         return cell
+    }
+    
+    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        if displayedMovies.count < totalMovies {
+            if indexPath.row == displayedMovies.count {
+                TMDBAPIInterface.shared.getDiscoverMovies(genreId: genreId ?? 0, page: (indexPath.row / 20)+1) { (success, statusCode, data) in
+                    DispatchQueue.main.async {
+                        self.totalMovies = data?["total_results"] as? Int ?? 0
+                        self.totalPages = data?["total_pages"] as? Int ?? 1
+                        if let res = data?["results"] as? [[String:Any]] {
+                            self.displayedMovies.append(contentsOf: res)
+                        }
+                        self.tableView.reloadData()
+                        MBProgressHUD.hide(for: self.view, animated: true)
+                    }
+                }
+            }
+        }
     }
 
     /*
