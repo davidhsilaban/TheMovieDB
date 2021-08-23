@@ -8,12 +8,12 @@
 import Foundation
 
 class APIHTTPRequest {
-    private let API_KEY = "02bdafe8119422f52cae64bfff62b3be"
-    private let BASE_URL = "https://api.themoviedb.org/3"
+    static let API_KEY = "02bdafe8119422f52cae64bfff62b3be"
+    static let BASE_URL = "https://api.themoviedb.org/3"
     
     private func httpRequest(method: String, endpoint: String, params: [String:Any]?, jsonBody: [String:Any]?, completionHandler: @escaping (_ success: Bool, _ errorCode: Int, _ response: [String:Any]?) -> Void) {
-        var urlComponents = URLComponents(string: BASE_URL+endpoint)
-        var theParams = ["api_key": API_KEY as Any]
+        var urlComponents = URLComponents(string: APIHTTPRequest.BASE_URL+endpoint)
+        var theParams = ["api_key": APIHTTPRequest.API_KEY as Any]
         if let pars = params {
             theParams.merge(pars) { (current, _) in current }
         }
