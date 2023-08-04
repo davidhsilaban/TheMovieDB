@@ -324,6 +324,7 @@ class MoviePrimaryInfoViewController: UIViewController, UITableViewDelegate, UIT
         // Pass the selected object to the new view controller.
         if let dest = segue.destination as? UserReviewTableViewController {
             dest.movieId = movieId
+            UserReviewRouter.createModule(view: dest)
         }
     }
 

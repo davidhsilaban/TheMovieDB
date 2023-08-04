@@ -134,6 +134,7 @@ class MoviesFromGenreTableViewController: UITableViewController {
             let movieData = displayedMovies[tableView.indexPath(for: cell)?.row ?? 0]
             dest.movieId = movieData.id
             dest.navigationItem.title = movieData.title ?? "Unknown Title"
+            MoviePrimaryInfoRouter.createModule(view: dest)
         }
     }
 
