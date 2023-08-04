@@ -10,7 +10,7 @@ import Foundation
 struct MoviePrimaryInfoModel : Codable {
     let adult : Bool?
     let backdrop_path : String?
-    let belongs_to_collection : String?
+//    let belongs_to_collection : [String:AnyObject]?
     let budget : Int?
     let genres : [GenreModel]?
     let homepage : String?
