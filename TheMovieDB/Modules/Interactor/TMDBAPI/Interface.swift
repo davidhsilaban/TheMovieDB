@@ -12,23 +12,23 @@ class TMDBAPIInterface {
     
     private let apiHttpRequest = APIHTTPRequest()
     
-    func getMovieGenres(completionHandler: @escaping (Bool, Int, [String:Any]?) -> Void) {
+    func getMovieGenres(completionHandler: @escaping (Bool, Int, Data?) -> Void) {
         apiHttpRequest.httpGet(endpoint: "/genre/movie/list", params: nil, completionHandler: completionHandler)
     }
     
-    func getDiscoverMovies(genreId: Int, page: Int, completionHandler: @escaping (Bool, Int, [String:Any]?) -> Void) {
+    func getDiscoverMovies(genreId: Int, page: Int, completionHandler: @escaping (Bool, Int, Data?) -> Void) {
         apiHttpRequest.httpGet(endpoint: "/discover/movie", params: ["with_genres": genreId, "page": page, "include_video": true, "sort_by": "original_title.asc"], completionHandler: completionHandler)
     }
     
-    func getPrimaryInfoByMovieId(movieId: Int, completionHandler: @escaping (Bool, Int, [String:Any]?) -> Void) {
+    func getPrimaryInfoByMovieId(movieId: Int, completionHandler: @escaping (Bool, Int, Data?) -> Void) {
         apiHttpRequest.httpGet(endpoint: "/movie/\(movieId)", params: nil, completionHandler: completionHandler)
     }
     
-    func getVideosByMovieId(movieId: Int, completionHandler: @escaping (Bool, Int, [String:Any]?) -> Void) {
+    func getVideosByMovieId(movieId: Int, completionHandler: @escaping (Bool, Int, Data?) -> Void) {
         apiHttpRequest.httpGet(endpoint: "/movie/\(movieId)/videos", params: nil, completionHandler: completionHandler)
     }
     
-    func getReviewsByMovieId(movieId: Int, page: Int, completionHandler: @escaping (Bool, Int, [String:Any]?) -> Void) {
+    func getReviewsByMovieId(movieId: Int, page: Int, completionHandler: @escaping (Bool, Int, Data?) -> Void) {
         apiHttpRequest.httpGet(endpoint: "/movie/\(movieId)/reviews", params: ["page": page], completionHandler: completionHandler)
     }
 }

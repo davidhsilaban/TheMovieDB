@@ -10,9 +10,11 @@ import MBProgressHUD
 
 class MoviesFromGenreTableViewController: UITableViewController {
     var genreId: Int?
-    private var displayedMovies: [[String:Any]] = []
+    private var displayedMovies: [MoviesByGenreResultsModel] = []
+    private var displayedMoviePosters: [Int:UIImage?] = [:]
     private var totalMovies: Int = 0
     private var totalPages: Int = 1
+    var presenter: MoviesFromGenreListViewToPresenterProtocol?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,25 +26,11 @@ class MoviesFromGenreTableViewController: UITableViewController {
         // self.navigationItem.rightBarButtonItem = self.editButtonItem
         
         // Load movies from TMDB
-        MBProgressHUD.showAdded(to: self.view, animated: true)
-        TMDBAPIInterface.shared.getDiscoverMovies(genreId: genreId ?? 0, page: 1) { (success, statusCode, data) in
-            DispatchQueue.main.async {
-                if !success || !((200...299).contains(statusCode)) {
-                    MBProgressHUD.hide(for: self.view, animated: true)
-                    let alertVc = UIAlertController(title: "Error", message: "Unable to load movies from selected genre from TheMovieDB", preferredStyle: .alert)
-                    alertVc.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-                    self.present(alertVc, animated: true, completion: nil)
-                    return
-                }
-                self.totalMovies = data?["total_results"] as? Int ?? 0
-                self.totalPages = data?["total_pages"] as? Int ?? 1
-                if let res = data?["results"] as? [[String:Any]] {
-                    self.displayedMovies.append(contentsOf: res)
-                }
-                self.tableView.reloadData()
-                MBProgressHUD.hide(for: self.view, animated: true)
-            }
+        guard let genreId = genreId else {
+            return
         }
+        MBProgressHUD.showAdded(to: self.view, animated: true)
+        presenter?.updateView(genreId: genreId, page: 1)
     }
 
     // MARK: - Table view data source
@@ -67,7 +55,12 @@ class MoviesFromGenreTableViewController: UITableViewController {
         // Configure the cell...
         if indexPath.row < displayedMovies.count {
             let movieData = displayedMovies[indexPath.row]
-            cell.textLabel?.text = movieData["title"] as? String
+            let imgView = cell.viewWithTag(1) as? UIImageView
+            let label = cell.viewWithTag(2) as? UILabel
+            label?.text = movieData.title
+            if let movieId = movieData.id {
+                imgView?.image = self.displayedMoviePosters[movieId] as? UIImage
+            }
         } else {
             cell = tableView.dequeueReusableCell(withIdentifier: "loadingCell", for: indexPath)
             cell.textLabel?.text = "Loading..."
@@ -79,25 +72,19 @@ class MoviesFromGenreTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         if displayedMovies.count < totalMovies {
             if indexPath.row == displayedMovies.count {
-                TMDBAPIInterface.shared.getDiscoverMovies(genreId: genreId ?? 0, page: (indexPath.row / 20)+1) { (success, statusCode, data) in
-                    DispatchQueue.main.async {
-                        if !success || !((200...299).contains(statusCode)) {
-                            MBProgressHUD.hide(for: self.view, animated: true)
-                            let alertVc = UIAlertController(title: "Error", message: "Unable to load movies from selected genre from TheMovieDB", preferredStyle: .alert)
-                            alertVc.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-                            self.present(alertVc, animated: true, completion: nil)
-                            return
-                        }
-                        self.totalMovies = data?["total_results"] as? Int ?? 0
-                        self.totalPages = data?["total_pages"] as? Int ?? 1
-                        if let res = data?["results"] as? [[String:Any]] {
-                            self.displayedMovies.append(contentsOf: res)
-                        }
-                        self.tableView.reloadData()
-                        MBProgressHUD.hide(for: self.view, animated: true)
-                    }
+                guard let genreId = genreId else {
+                    return
                 }
+                presenter?.updateView(genreId: genreId, page: (indexPath.row / 20)+1)
             }
+        }
+    }
+    
+    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        if indexPath.row < displayedMovies.count {
+            return 300.0
+        } else {
+            return UITableView.automaticDimension
         }
     }
 
@@ -145,9 +132,55 @@ class MoviesFromGenreTableViewController: UITableViewController {
         if let dest = segue.destination as? MoviePrimaryInfoViewController {
             let cell = sender as! UITableViewCell
             let movieData = displayedMovies[tableView.indexPath(for: cell)?.row ?? 0]
-            dest.movieId = movieData["id"] as? Int
-            dest.navigationItem.title = movieData["title"] as? String ?? "Unknown Title"
+            dest.movieId = movieData.id
+            dest.navigationItem.title = movieData.title ?? "Unknown Title"
         }
     }
 
+}
+
+extension MoviesFromGenreTableViewController: MoviesFromGenreListPresenterToViewProtocol {
+    
+    func showMoviesFromGenre() {
+        self.totalMovies = presenter?.getMoviesListCount() ?? 0
+        self.totalPages = presenter?.getMoviesPageTotal() ?? 0
+        self.displayedMovies = presenter?.interactor?.movies ?? []
+        if let total = presenter?.getMoviesListCount() {
+            for i in 0..<total {
+                let item = presenter?.getMovie(index: i)
+                // Load movie poster
+                if let movieId = item?.id {
+                    if let posterPath = item?.poster_path {
+                        let urlComponents = URLComponents(string: "https://image.tmdb.org/t/p/original"+posterPath)
+                        if let url = urlComponents?.url {
+                            if let data = try? Data(contentsOf: url) {
+                                if let image = UIImage(data: data) {
+                                    self.displayedMoviePosters[movieId] = image
+                                } else {
+                                    self.displayedMoviePosters[movieId] = UIImage(named: "no_image")
+                                }
+                            } else {
+                                self.displayedMoviePosters[movieId] = UIImage(named: "no_image")
+                            }
+                        } else {
+                            self.displayedMoviePosters[movieId] = UIImage(named: "no_image")
+                        }
+                    } else {
+                        self.displayedMoviePosters[movieId] = UIImage(named: "no_image")
+                    }
+                    DispatchQueue.main.async {
+                        self.tableView.reloadData()
+                    }
+                }
+            }
+        }
+        MBProgressHUD.hide(for: self.view, animated: true)
+    }
+    
+    func showMoviesFromGenreError() {
+        MBProgressHUD.hide(for: self.view, animated: true)
+        let alertVc = UIAlertController(title: "Error", message: "Unable to load movies from selected genre from TheMovieDB", preferredStyle: .alert)
+        alertVc.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        self.present(alertVc, animated: true, completion: nil)
+    }
 }
