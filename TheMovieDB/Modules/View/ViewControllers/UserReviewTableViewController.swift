@@ -10,9 +10,9 @@ import MBProgressHUD
 
 class UserReviewTableViewController: UITableViewController {
     var movieId: Int?
-//    private var reviews: [[String:Any]]?
-//    private var totalReviews: Int = 0
-//    private var totalPages: Int = 1
+    private var reviews: [UserReviewResultsModel] = []
+    private var totalReviews: Int = 0
+    private var totalPages: Int = 1
     var presenter: UserReviewListViewToPresenterProtocol?
 
     override func viewDidLoad() {
@@ -41,10 +41,10 @@ class UserReviewTableViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        if presenter?.getUserReviewsListCount() ?? 0 < presenter?.getUserReviewsPageTotal() ?? 1 {
-            return presenter?.getUserReviewsListCount() ?? 0 + 1
+        if reviews.count < totalReviews {
+            return reviews.count + 1
         } else {
-            return presenter?.getUserReviewsListCount() ?? 0
+            return reviews.count
         }
     }
 
@@ -52,10 +52,10 @@ class UserReviewTableViewController: UITableViewController {
         var cell = tableView.dequeueReusableCell(withIdentifier: "userReviewCell", for: indexPath)
 
         // Configure the cell...
-        if indexPath.row < (presenter?.getUserReviewsListCount() ?? 0) {
-            let reviewData = presenter?.getUserReview(index: indexPath.row)
-            cell.textLabel?.text = reviewData?.content
-            cell.detailTextLabel?.text = reviewData?.author
+        if indexPath.row < reviews.count {
+            let reviewData = reviews[indexPath.row]
+            cell.textLabel?.text = reviewData.content
+            cell.detailTextLabel?.text = reviewData.author
         } else {
             cell = tableView.dequeueReusableCell(withIdentifier: "loadingCell", for: indexPath)
             cell.textLabel?.text = "Loading..."
@@ -65,8 +65,8 @@ class UserReviewTableViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        if (presenter?.getUserReviewsListCount() ?? 0) < presenter?.getUserReviewsTotal() ?? 0 {
-            if indexPath.row == (presenter?.getUserReviewsListCount() ?? 0) {
+        if reviews.count < totalReviews {
+            if indexPath.row == reviews.count {
                 presenter?.updateView(movieId: movieId ?? 0, page: (indexPath.row / 20)+1)
             }
         }
@@ -121,6 +121,9 @@ class UserReviewTableViewController: UITableViewController {
 
 extension UserReviewTableViewController: UserReviewListPresenterToViewProtocol {
     func showUserReviews() {
+        self.totalReviews = presenter?.getUserReviewsTotal() ?? 0
+        self.totalPages = presenter?.getUserReviewsPageTotal() ?? 0
+        self.reviews.append(contentsOf: presenter?.interactor?.userReviews ?? [])
         self.tableView.reloadData()
         MBProgressHUD.hide(for: self.view, animated: true)
     }
