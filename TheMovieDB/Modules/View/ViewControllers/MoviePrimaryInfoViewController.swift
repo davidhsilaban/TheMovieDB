@@ -381,8 +381,10 @@ extension MoviePrimaryInfoViewController: MoviePrimaryInfoPresenterToViewProtoco
                 let primaryInfoMirror = Mirror(reflecting: primaryInfoRes)
                 for (key, value) in primaryInfoMirror.children.sorted(by: {$0.0 ?? "" < $1.0 ?? ""}) {
                     if key != nil {
-                        self.movieDataKeys.append(key!)
-                        self.movieDataValues.append(String(describing: value))
+                        if let val = value as AnyObject? {
+                            self.movieDataKeys.append(key!)
+                            self.movieDataValues.append(String(describing: val))
+                        }
                     }
                 }
                 

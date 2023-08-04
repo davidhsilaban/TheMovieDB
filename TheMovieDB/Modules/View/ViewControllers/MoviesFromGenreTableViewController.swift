@@ -143,9 +143,9 @@ class MoviesFromGenreTableViewController: UITableViewController {
 extension MoviesFromGenreTableViewController: MoviesFromGenreListPresenterToViewProtocol {
     
     func showMoviesFromGenre() {
-        self.totalMovies = presenter?.getMoviesListCount() ?? 0
+        self.totalMovies = presenter?.getMoviesGrandTotal() ?? 0
         self.totalPages = presenter?.getMoviesPageTotal() ?? 0
-        self.displayedMovies = presenter?.interactor?.movies ?? []
+        self.displayedMovies.append(contentsOf: presenter?.interactor?.movies ?? [])
         if let total = presenter?.getMoviesListCount() {
             for i in 0..<total {
                 let item = presenter?.getMovie(index: i)
